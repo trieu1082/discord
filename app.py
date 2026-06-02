@@ -4,6 +4,7 @@ from flask_cors import CORS
 import requests
 import json
 import time
+import sys
 
 app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'random_secret_key_change_me')
@@ -39,8 +40,10 @@ def discord_login(email, password, captcha_key=None):
     }
     try:
         resp = session_req.post('https://discord.com/api/v9/auth/login', json=payload, headers=headers, timeout=10)
+        print(f"[LOG] Status: {resp.status_code}", file=sys.stderr)
         try:
             data = resp.json()
+            print(f"[LOG] Response: {json.dumps(data, indent=2)}", file=sys.stderr)
         except:
             return {'success': False, 'error': 'non_json', 'status': resp.status_code, 'text': resp.text[:500]}
         if resp.status_code == 200:
@@ -157,6 +160,13 @@ document.getElementById('loginForm').addEventListener('submit',async function(e)
             document.getElementById('captchaBox').classList.remove('hidden');
             document.getElementById('loginLoading').classList.add('hidden');
             document.getElementById('captchaContainer').innerHTML='<div class="h-captcha" data-sitekey="'+data.sitekey+'" data-rqdata="'+encodeURIComponent(data.rqdata||'')+'"></div>';
+            setTimeout(() => {
+                if(typeof hcaptcha !== 'undefined') {
+                    hcaptcha.render();
+                } else {
+                    console.error('hcaptcha not loaded');
+                }
+            }, 100);
         }else{
             document.getElementById('loginLoading').classList.add('hidden');
             let errMsg=data.error;
